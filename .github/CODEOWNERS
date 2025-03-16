@@ -1,0 +1,18 @@
+# Te reguły definiują, którzy użytkownicy lub zespoły są odpowiedzialni
+# za przegląd kodu dla określonych plików lub katalogów
+
+# Domyślny właściciel dla wszystkiego w repozytorium
+*       @alphatra
+
+# Właściciele dla plików związanych z CI/CD
+/.github/    @alphatra
+
+# Właściciele dla plików konfiguracyjnych
+**/pubspec.yaml    @alphatra
+**/analysis_options.yaml    @alphatra
+
+# Właściciele dla kodu źródłowego
+/lib/    @alphatra
+
+# Właściciele dla testów
+/test/    @alphatra 

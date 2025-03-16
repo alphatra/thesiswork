@@ -1,0 +1,110 @@
+name: Flutter Continuous Deployment
+
+on:
+  push:
+    branches: [ dev, staging ]
+  workflow_dispatch:
+
+jobs:
+  deploy-dev:
+    name: Deploy to Development
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Build Development version
+        run: |
+          flutter build linux --debug --dart-define=ENVIRONMENT=development
+          flutter build web --debug --dart-define=ENVIRONMENT=development
+
+      - name: Deploy to Dev Server
+        run: |
+          echo "Deploying to development environment"
+          # Tutaj mogą być specyficzne instrukcje wdrożenia dla środowiska dev
+          # np. rsync, scp, firebase deploy, etc.
+
+  deploy-staging:
+    name: Deploy to Staging
+    if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Build Staging version
+        run: |
+          flutter build linux --profile --dart-define=ENVIRONMENT=staging
+          flutter build web --profile --dart-define=ENVIRONMENT=staging
+
+      - name: Deploy to Staging Server
+        run: |
+          echo "Deploying to staging environment"
+          # Tutaj mogą być specyficzne instrukcje wdrożenia dla środowiska staging
+          # np. rsync, scp, firebase deploy, etc.
+
+  notify:
+    name: Notify team
+    needs: [deploy-dev, deploy-staging]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Determine outcome
+        id: status
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "STATUS=failure" >> $GITHUB_ENV
+          else
+            echo "STATUS=success" >> $GITHUB_ENV
+          fi
+
+      - name: Send Slack notification
+        uses: rtCamp/action-slack-notify@v2
+        if: false  # Wyłączone do czasu skonfigurowania
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_CHANNEL: ci-cd
+          SLACK_COLOR: ${{ env.STATUS == 'failure' && 'danger' || 'good' }}
+          SLACK_TITLE: Deployment ${{ env.STATUS == 'failure' && 'Failed' || 'Succeeded' }}
+          SLACK_MESSAGE: "Branch: ${{ github.ref }}\nCommit: ${{ github.event.head_commit.message }}\nAuthor: ${{ github.actor }}"
+          SLACK_FOOTER: "Thesiswork - CD Pipeline"
+
+      - name: Send Email notification
+        if: false  # Wyłączone do czasu skonfigurowania
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SERVER }}
+          server_port: ${{ secrets.MAIL_PORT }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "Thesiswork - Deployment ${{ env.STATUS == 'failure' && 'Failed' || 'Succeeded' }}"
+          body: "Branch: ${{ github.ref }}\nCommit: ${{ github.event.head_commit.message }}\nAuthor: ${{ github.actor }}"
+          to: team@example.com
+          from: CI/CD <ci-cd@example.com> 
