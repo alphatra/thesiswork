@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:thesiswork/shared/theme/app_theme.dart';
 import 'package:thesiswork/shared/widgets/app_layout.dart';
 import 'package:window_manager/window_manager.dart';
+import 'features/auth/screens/login_screen.dart';
+import 'features/home/presentation/home_screen.dart';
+import 'shared/providers/auth_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,18 +64,8 @@ class MyApp extends StatelessWidget {
       title: 'Thesiswork',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme(),
-      home: const AppLayout(),
       themeMode: ThemeMode.dark,
-      // Efekty przejścia między ekranami
-      builder: (context, child) {
-        return Material(
-          color: Colors.transparent,
-          child: child,
-        );
-      },
-      // Animacje przy nawigacji
-      themeAnimationDuration: const Duration(milliseconds: 500),
-      themeAnimationCurve: Curves.easeOutCubic,
+      home: const LoginScreen(),
     );
   }
 }
